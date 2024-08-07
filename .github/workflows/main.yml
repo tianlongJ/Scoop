@@ -16,7 +16,7 @@ jobs:
           git config --global credential.helper store
           git clone https://${{ secrets.GITHUB_TOKEN }}@github.com/tianlongJ/Scoop.git tmp
           cd tmp
-          git remote add upstream  https://${{ secrets.GITHUB_TOKEN }}@github.com/ScoopInstaller/Scoop.git
+          git remote add upstream  https://github.com/ScoopInstaller/Scoop.git
           git fetch upstream
           git merge upstream/master
           git push origin master
