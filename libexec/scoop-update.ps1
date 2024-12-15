@@ -157,17 +157,17 @@ function Sync-Bucket {
     )
     Write-Host 'Updating Buckets...'
 
-    if (!(Test-Path (Join-Path (Find-BucketDirectory 'main' -Root) '.git'))) {
-        info "Converting 'main' bucket to git repo..."
-        $status = rm_bucket 'main'
-        if ($status -ne 0) {
-            abort "Failed to remove local 'main' bucket."
-        }
-        $status = add_bucket 'main' (known_bucket_repo 'main')
-        if ($status -ne 0) {
-            abort "Failed to add remote 'main' bucket."
-        }
-    }
+    # if (!(Test-Path (Join-Path (Find-BucketDirectory 'main' -Root) '.git'))) {
+    #     info "Converting 'main' bucket to git repo..."
+    #     $status = rm_bucket 'main'
+    #     if ($status -ne 0) {
+    #         abort "Failed to remove local 'main' bucket."
+    #     }
+    #     $status = add_bucket 'main' (known_bucket_repo 'main')
+    #     if ($status -ne 0) {
+    #         abort "Failed to add remote 'main' bucket."
+    #     }
+    # }
 
 
     $buckets = Get-LocalBucket | ForEach-Object {
