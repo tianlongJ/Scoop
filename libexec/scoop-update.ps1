@@ -293,10 +293,10 @@ function update($app, $global, $quiet = $false, $independent, $suggested, $use_c
     Write-Host "Updating '$app' ($old_version -> $version)"
 
     #region Workaround for #2952
-    if (test_running_process $app $global) {
-        Write-Host 'Running process detected, skip updating.'
-        return
-    }
+    # if (test_running_process $app $global) {
+    #     Write-Host 'Running process detected, skip updating.'
+    #     return
+    # }
     #endregion Workaround for #2952
 
     # region Workaround
