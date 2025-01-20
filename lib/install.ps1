@@ -97,7 +97,7 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
 }
 
 function Invoke-CachedDownload ($app, $version, $url, $to, $cookies = $null, $use_cache = $true) {
-    $url = $url -replace "https://ghproxy.(com|net)/", ""
+    $url = $url -replace "^https://[^/]+/(?=https://github.com)", ''
     $cached = cache_path $app $version $url
 
     if (!(Test-Path $cached) -or !$use_cache) {
