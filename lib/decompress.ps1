@@ -53,7 +53,7 @@ function Invoke-Extraction {
                 ExtractDir      = $extractDir[$extracted]
             }
             Write-Host 'Extracting ' -NoNewline
-            Write-Host $(url_remote_filename $uri[$i]) -ForegroundColor Cyan -NoNewline
+            Write-Host $($app + "-v" + $version) -ForegroundColor Cyan -NoNewline
             Write-Host ' ... ' -NoNewline
             & $extractFn @fnArgs -Removal
             Write-Host 'done.' -ForegroundColor Green

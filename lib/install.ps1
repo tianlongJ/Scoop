@@ -5,7 +5,7 @@ function nightly_version($quiet = $false) {
     return "nightly-$(Get-Date -Format 'yyyyMMdd')"
 }
 
-function install_app($app, $architecture, $global, $suggested, $use_cache = $true, $check_hash = $true) {
+function install_app($app, $architecture, $global, $suggested, $use_cache = $true, $check_hash = $true, $version) {
     $app, $manifest, $bucket, $url = Get-Manifest $app
 
     foreach ($bucket in Get-LocalBucket) {
@@ -19,16 +19,20 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
         abort "Couldn't find manifest for '$app'$(if ($bucket) { " from '$bucket' bucket" } elseif ($url) { " at '$url'" })."
     }
 
-    $version = $manifest.version
-    if (!$version) { abort "Manifest doesn't specify a version." }
-    if ($version -match '[^\w\.\-\+_]') {
-        abort "Manifest version has unsupported character '$($matches[0])'."
-    }
+    Write-Host $app, $architecture, $global, $suggested
 
-    $is_nightly = $version -eq 'nightly'
-    if ($is_nightly) {
-        $version = nightly_version
-        $check_hash = $false
+    if ($null -eq $version) {
+        $version = $manifest.version
+        if (!$version) { abort "Manifest doesn't specify a version." }
+        if ($version -match '[^\w\.\-\+_]') {
+            abort "Manifest version has unsupported character '$($matches[0])'."
+        }
+
+        $is_nightly = $version -eq 'nightly'
+        if ($is_nightly) {
+            $version = nightly_version
+            $check_hash = $false
+        }
     }
 
     $architecture = Get-SupportedArchitecture $manifest $architecture
@@ -260,7 +264,7 @@ function Invoke-CachedAria2Download ($app, $version, $manifest, $architecture, $
 
         if ((Test-Path $data.$url.source) -and -not((Test-Path "$($data.$url.source).aria2") -or (Test-Path $urlstxt)) -and $use_cache) {
             Write-Host 'Loading ' -NoNewline
-            Write-Host $(url_remote_filename $url) -f Cyan -NoNewline
+            Write-Host $($app + "-v" + $version) -f Cyan -NoNewline
             Write-Host ' from cache.'
         } else {
             $download_finished = $false
