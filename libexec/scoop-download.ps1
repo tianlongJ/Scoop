@@ -114,7 +114,7 @@ foreach ($curr_app in $apps) {
             if($curr_check_hash) {
                 $manifest_hash = hash_for_url $manifest $url $architecture
                 $cached = cache_path $app $version $url
-                $ok, $err = check_hash $cached $manifest_hash (show_app $app $bucket)
+                $ok, $err = check_hash $cached $manifest_hash (show_app $app $bucket) $version
 
                 if(!$ok) {
                     error $err

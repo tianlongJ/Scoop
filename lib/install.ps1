@@ -108,7 +108,9 @@ function Invoke-CachedDownload ($app, $version, $url, $to, $cookies = $null, $us
         ensure $cachedir | Out-Null
         Start-Download $url "$cached.download" $cookies
         Move-Item "$cached.download" $cached -Force
-    } else { Write-Host "Loading $(url_remote_filename $url) from cache" }
+    } else {
+        Write-Host "Loading $($app + "-v" + $version) from cache"
+    }
 
     if (!($null -eq $to)) {
         if ($use_cache) {
@@ -354,7 +356,7 @@ function Invoke-CachedAria2Download ($app, $version, $manifest, $architecture, $
         # run hash checks
         if ($check_hash) {
             $manifest_hash = hash_for_url $manifest $url $architecture
-            $ok, $err = check_hash $data.$url.source $manifest_hash $(show_app $app $bucket)
+            $ok, $err = check_hash $data.$url.source $manifest_hash $(show_app $app $bucket) $version
             if (!$ok) {
                 error $err
                 if (Test-Path $data.$url.source) {
@@ -581,7 +583,7 @@ function Invoke-ScoopDownload ($app, $version, $manifest, $bucket, $architecture
 
             if ($check_hash) {
                 $manifest_hash = hash_for_url $manifest $url $architecture
-                $ok, $err = check_hash "$dir\$fname" $manifest_hash $(show_app $app $bucket)
+                $ok, $err = check_hash "$dir\$fname" $manifest_hash $(show_app $app $bucket) $version
                 if (!$ok) {
                     error $err
                     $cached = cache_path $app $version $url
@@ -636,14 +638,19 @@ function hash_for_url($manifest, $url, $arch) {
 }
 
 # returns (ok, err)
-function check_hash($file, $hash, $app_name) {
+function check_hash($file, $hash, $app_name, $version) {
     if (!$hash) {
         warn "Warning: No hash in manifest. SHA256 for '$(fname $file)' is:`n    $((Get-FileHash -Path $file -Algorithm SHA256).Hash.ToLower())"
         return $true, $null
     }
 
     Write-Host 'Checking hash of ' -NoNewline
-    Write-Host $(url_remote_filename $url) -f Cyan -NoNewline
+    if (!$version) {
+        Write-Host $(url_remote_filename $url) -f Cyan -NoNewline
+    } else {
+        $parts = $app_name -split '/'
+        Write-Host $($parts[1] + "-v" + $version) -f Cyan -NoNewline
+    }
     Write-Host ' ... ' -NoNewline
     $algorithm, $expected = get_hash $hash
     if ($null -eq $algorithm) {
