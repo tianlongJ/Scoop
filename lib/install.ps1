@@ -19,8 +19,6 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
         abort "Couldn't find manifest for '$app'$(if ($bucket) { " from '$bucket' bucket" } elseif ($url) { " at '$url'" })."
     }
 
-    Write-Host $app, $architecture, $global, $suggested
-
     if ($null -eq $version) {
         $version = $manifest.version
         if (!$version) { abort "Manifest doesn't specify a version." }
