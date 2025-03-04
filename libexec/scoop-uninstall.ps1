@@ -50,9 +50,13 @@ if (!$apps) { exit 0 }
     ($app, $global) = $_
     $oldVersions = @(Get-ChildItem $appDir -Name -Exclude "current,$version")
     if ($version -and $oldVersions) {
+        Write-Host "Uninstalling '$app' ($version)."
         $dir = versiondir $app $version $global
-        &cmd.exe /c rd /q/s $dir
-        &cmd.exe /c scoop reset $app
+        Remove-Item $dir -Recurse -Force -ErrorAction Stop
+        if (installed $app) {
+            scoop reset $app
+        }
+        success "$app' ($version) was uninstalled."
         return
     }
     $version = Select-CurrentVersion -AppName $app -Global:$global

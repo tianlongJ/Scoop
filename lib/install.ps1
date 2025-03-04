@@ -31,6 +31,8 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
             $version = nightly_version
             $check_hash = $false
         }
+    } else {
+        $check_hash = $false
     }
 
     $architecture = Get-SupportedArchitecture $manifest $architecture
@@ -256,6 +258,7 @@ function Invoke-CachedAria2Download ($app, $version, $manifest, $architecture, $
     }
 
     foreach ($url in $urls) {
+        $url = $url -replace $manifest.version,$version
         $data.$url = @{
             'target'    = Join-Path $dir (url_filename $url)
             'cachename' = fname (cache_path $app $version $url)
@@ -343,8 +346,9 @@ function Invoke-CachedAria2Download ($app, $version, $manifest, $architecture, $
         [Console]::OutputEncoding = $oriConsoleEncoding
     }
 
+    $dataUrl = $data.$url
     foreach ($url in $urls) {
-
+        $data.$url = $dataUrl
         $metalink_filename = get_filename_from_metalink $data.$url.source
         if ($metalink_filename) {
             Remove-Item $data.$url.source -Force
@@ -598,7 +602,7 @@ function Invoke-ScoopDownload ($app, $version, $manifest, $bucket, $architecture
         }
     }
 
-    return $urls.ForEach({ url_filename $_ })
+    return $urls.ForEach({ (url_filename $_) -replace $manifest.version,$version })
 }
 
 function cookie_header($cookies) {
