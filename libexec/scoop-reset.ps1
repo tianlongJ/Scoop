@@ -78,6 +78,7 @@ $apps | ForEach-Object {
     $architecture = $install.architecture
 
     $dir = link_current $dir
+    Invoke-HookScript -HookType 'installer' -Manifest $manifest -ProcessorArchitecture $architecture
     create_shims $manifest $dir $global $architecture
     create_startmenu_shortcuts $manifest $dir $global $architecture
     # unset all potential old env before re-adding
