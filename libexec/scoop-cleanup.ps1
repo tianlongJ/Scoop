@@ -29,6 +29,14 @@ if ($global -and !(is_admin)) {
 
 function cleanup($app, $global, $verbose, $cache) {
     $current_version = Select-CurrentVersion -AppName $app -Global:$global
+    $install_info_path = "$(versiondir $app $current_version)\install.json"
+    if (Test-Path $install_info_path) {
+        $install_info = parse_json $install_info_path
+    }
+    if ($install_info.hold) {
+        Write-Host "$app is held, continue"
+        return;
+    }
     if ($cache) {
         Remove-Item "$cachedir\$app#*" -Exclude "$app#$current_version#*"
     }
