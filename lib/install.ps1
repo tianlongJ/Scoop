@@ -207,7 +207,7 @@ function get_filename_from_metalink($file) {
 
 function Invoke-CachedAria2Download ($app, $version, $manifest, $architecture, $dir, $cookies = $null, $use_cache = $true, $check_hash = $true) {
     $data = @{}
-    $urls = @(script:url $manifest $architecture) -replace "https://ghproxy.(com|net)/", ""
+    $urls = @(script:url $manifest $architecture).Replace("https://ghproxy.(com|net)/", "")
     # aria2 input file
     $urlstxt = Join-Path $cachedir "$app.txt"
     $urlstxt_content = ''
