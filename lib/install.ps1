@@ -258,7 +258,7 @@ function Invoke-CachedAria2Download ($app, $version, $manifest, $architecture, $
     }
 
     foreach ($url in $urls) {
-        $url = $url -replace $manifest.version,$version
+        $url = $url.Replace($manifest.version,$version)
         $data.$url = @{
             'target'    = Join-Path $dir (url_filename $url)
             'cachename' = fname (cache_path $app $version $url)
