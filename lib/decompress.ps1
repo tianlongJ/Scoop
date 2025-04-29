@@ -48,10 +48,14 @@ function Invoke-Extraction {
             }
         }
         if ($extractFn) {
+            $eDir = $extractDir[$extracted]
+            if ($eDir) {
+                $eDir = $eDir.Replace($Manifest.version,$version)
+            }
             $fnArgs = @{
                 Path            = Join-Path $Path $Name[$i]
                 DestinationPath = Join-Path $Path $extractTo[$extracted]
-                ExtractDir      = ($extractDir[$extracted]).Replace($Manifest.version,$version)
+                ExtractDir      = $eDir
             }
             Write-Host 'Extracting ' -NoNewline
             Write-Host $($app + "-v" + $version) -ForegroundColor Cyan -NoNewline
