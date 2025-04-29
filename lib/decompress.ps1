@@ -10,7 +10,8 @@ function Invoke-Extraction {
         $Manifest,
         [Alias('Arch', 'Architecture')]
         [string]
-        $ProcessorArchitecture
+        $ProcessorArchitecture,
+        $version
     )
 
     $uri = @(url $Manifest $ProcessorArchitecture)
@@ -50,7 +51,7 @@ function Invoke-Extraction {
             $fnArgs = @{
                 Path            = Join-Path $Path $Name[$i]
                 DestinationPath = Join-Path $Path $extractTo[$extracted]
-                ExtractDir      = $extractDir[$extracted]
+                ExtractDir      = ($extractDir[$extracted]).Replace($Manifest.version,$version)
             }
             Write-Host 'Extracting ' -NoNewline
             Write-Host $($app + "-v" + $version) -ForegroundColor Cyan -NoNewline

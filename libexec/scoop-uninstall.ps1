@@ -52,7 +52,8 @@ if (!$apps) { exit 0 }
     if ($version -and $oldVersions) {
         Write-Host "Uninstalling '$app' ($version)."
         $dir = versiondir $app $version $global
-        Remove-Item $dir -Recurse -Force -ErrorAction Stop
+#        Remove-Item $dir -Recurse -Force -ErrorAction Stop
+        cmd /c rd /q/s $dir
         if (installed $app) {
             scoop reset $app
         }
