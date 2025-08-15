@@ -45,7 +45,7 @@ function Invoke-ScoopDownload ($app, $version, $manifest, $bucket, $architecture
         }
     }
 
-    return $urls.ForEach({ url_filename $_ })
+    return $urls.ForEach({ (url_filename $_) -replace $manifest.version,$version })
 }
 
 ## [System.Net] downloader
@@ -383,6 +383,7 @@ function Invoke-CachedAria2Download ($app, $version, $manifest, $architecture, $
     }
 
     foreach ($url in $urls) {
+        $url = $url -replace $manifest.version, $version
         $data.$url = @{
             'target'    = Join-Path $dir (url_filename $url)
             'cachename' = fname (cache_path $app $version $url)
@@ -481,8 +482,9 @@ function Invoke-CachedAria2Download ($app, $version, $manifest, $architecture, $
         [Console]::OutputEncoding = $oriConsoleEncoding
     }
 
+    $dataUrl = $data.$url
     foreach ($url in $urls) {
-
+        $data.$url = $dataUrl
         $metalink_filename = get_filename_from_metalink $data.$url.source
         if ($metalink_filename) {
             Remove-Item $data.$url.source -Force
