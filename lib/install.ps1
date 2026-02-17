@@ -8,12 +8,12 @@ function nightly_version($quiet = $false) {
 function install_app($app, $architecture, $global, $suggested, $use_cache = $true, $check_hash = $true, $version) {
     $app, $manifest, $bucket, $url = Get-Manifest $app
 
-    foreach ($bucket in Get-LocalBucket) {
-        $manifest = manifest $app $bucket
-        if ($manifest) {
-            break
-        }
-    }
+#    foreach ($bucket in Get-LocalBucket) {
+#        $manifest = manifest $app $bucket
+#        if ($manifest) {
+#            break
+#        }
+#    }
 
     if (!$manifest) {
         abort "Couldn't find manifest for '$app'$(if ($bucket) { " from '$bucket' bucket" } elseif ($url) { " at '$url'" })."
