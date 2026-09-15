@@ -2,6 +2,9 @@
 # Summary: Uninstall an app
 # Help: e.g. scoop uninstall git
 #
+# To uninstall a specific version of an app (other installed versions are kept):
+#      scoop uninstall 7zip@26.02
+#
 # Options:
 #   -g, --global   Uninstall a globally installed app
 #   -p, --purge    Remove all persistent data
@@ -42,14 +45,120 @@ if ($apps -eq 'scoop') {
     exit
 }
 
-$apps = Confirm-InstallationStatus $apps -Global:$global
+$queries = @($apps)
+$apps = Confirm-InstallationStatus $queries -Global:$global
 if (!$apps) { exit 0 }
 
-:app_loop foreach ($_ in $apps) {
-    ($app, $global) = $_
+$installedGlobal = @{}
+foreach ($item in $apps) {
+    $installedGlobal[$item[0]] = $item[1]
+}
 
-    $version = Select-CurrentVersion -AppName $app -Global:$global
+:app_loop foreach ($query in ($queries | Select-Object -Unique)) {
+    $app, $null, $specifiedVersion = parse_app $query
+    if (-not $installedGlobal.ContainsKey($app)) { continue }
+    $global = $installedGlobal[$app]
+
     $appDir = appdir $app $global
+    $currentVersion = Select-CurrentVersion -AppName $app -Global:$global
+    $installedVersions = @(Get-InstalledVersion -AppName $app -Global:$global)
+
+    # Uninstall only the specified version when other versions remain
+    if ($specifiedVersion) {
+        if ($specifiedVersion -notin $installedVersions) {
+            error "'$app' ($specifiedVersion) isn't installed."
+            continue
+        }
+
+        $remainingVersions = @($installedVersions | Where-Object { $_ -ne $specifiedVersion })
+        if ($remainingVersions.Count -gt 0) {
+            Write-Host "Uninstalling '$app' ($specifiedVersion)."
+
+            $dir = versiondir $app $specifiedVersion $global
+            $persist_dir = persistdir $app $global
+            $manifest = installed_manifest $app $specifiedVersion $global
+            $install = install_info $app $specifiedVersion $global
+            $architecture = $install.architecture
+            $bucket = $install.bucket
+            $isCurrent = $specifiedVersion -eq $currentVersion
+
+            if ($isCurrent) {
+                Invoke-HookScript -HookType 'pre_uninstall' -Manifest $manifest -Arch $architecture
+
+                #region Workaround for #2952
+                if (test_running_process $app $global) {
+                    continue
+                }
+                #endregion Workaround for #2952
+
+                try {
+                    Test-Path $dir -ErrorAction Stop | Out-Null
+                } catch [UnauthorizedAccessException] {
+                    error "Access denied: $dir. You might need to restart."
+                    continue
+                }
+
+                Invoke-Installer -Path $dir -Manifest $manifest -ProcessorArchitecture $architecture -Global:$global -Uninstall
+                rm_shims $app $manifest $global $architecture
+                rm_startmenu_shortcuts $manifest $global $architecture
+                if (get_config UNINSTALL_SHORTCUT) {
+                    rm_uninstall_shortcuts $app $global
+                }
+                $refdir = unlink_current $dir
+                uninstall_psmodule $manifest $refdir $global
+                env_rm_path $manifest $refdir $global $architecture
+                env_rm $manifest $global $architecture
+            }
+
+            try {
+                unlink_persist_data $manifest $dir
+                Remove-Item $dir -Recurse -Force -ErrorAction Stop
+            } catch {
+                if (Test-Path $dir) {
+                    error "Couldn't remove '$(friendly_path $dir)'; it may be in use."
+                    continue
+                }
+            }
+
+            if ($isCurrent) {
+                Invoke-HookScript -HookType 'post_uninstall' -Manifest $manifest -Arch $architecture
+
+                # Keep the app usable by switching current to the latest remaining version
+                $nextVersion = $remainingVersions[-1]
+                Write-Host "Resetting $app ($nextVersion)."
+
+                $manifest = installed_manifest $app $nextVersion $global
+                $install = install_info $app $nextVersion $global
+                $architecture = $install.architecture
+                $bucket = $install.bucket
+                $dir = Convert-Path (versiondir $app $nextVersion $global)
+                $original_dir = $dir
+                $persist_dir = persistdir $app $global
+
+                $dir = link_current $dir
+                create_shims $manifest $dir $global $architecture
+                create_startmenu_shortcuts $manifest $dir $global $architecture
+                if (get_config UNINSTALL_SHORTCUT) {
+                    create_uninstall_shortcuts $app $manifest $bucket $nextVersion $dir $global $architecture
+                }
+                install_psmodule $manifest $dir $global
+                env_add_path $manifest $dir $global $architecture
+                env_set $manifest $global $architecture
+                unlink_persist_data $manifest $original_dir
+                persist_data $manifest $original_dir $persist_dir
+                persist_permission $manifest $global
+            }
+
+            if ($purge) {
+                warn "Persisted data is kept because other versions of '$app' are still installed."
+            }
+
+            success "'$app' ($specifiedVersion) was uninstalled."
+            continue
+        }
+    }
+
+    $version = $currentVersion
     if ($version) {
         Write-Host "Uninstalling '$app' ($version)."
 
