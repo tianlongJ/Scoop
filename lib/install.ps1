@@ -50,6 +50,19 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     $persist_dir = persistdir $app $global
 
     $fname = Invoke-ScoopDownload $app $version $manifest $bucket $architecture $dir $use_cache $check_hash
+
+    # Download is allowed to finish while the app is running.
+    # Only an already installed app is checked, and only once install is about to start.
+    # scoop update checks before it uninstalls the old version, so skip this second check there.
+    if (($MyInvocation.ScriptName -notlike '*scoop-update*') -and (installed $app $global) -and (test_running_process $app $global)) {
+        Write-Host 'Running process detected, skip installing.'
+        $currentVersion = Select-CurrentVersion -AppName $app -Global:$global
+        if ($currentVersion -and ($currentVersion -ne $version)) {
+            Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        return
+    }
+
     Invoke-Extraction -Path $dir -Name $fname -Manifest $manifest -ProcessorArchitecture $architecture
     Invoke-HookScript -HookType 'pre_install' -Manifest $manifest -ProcessorArchitecture $architecture
 
